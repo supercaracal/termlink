@@ -191,8 +191,18 @@ function connectWs(sessionId: string) {
     if (currentSessionId !== sessionId) return;
     setStatus(false, 'Disconnected — reconnecting in 3s…');
     term.write('\r\n\x1b[31m[disconnected]\x1b[0m\r\n');
-    setTimeout(() => {
-      if (currentSessionId === sessionId) connectWs(sessionId);
+    setTimeout(async () => {
+      if (currentSessionId !== sessionId) return;
+      // セッションがサーバー側で削除されていたら（shell exit など）リストに戻る
+      try {
+        const sessions: SessionInfo[] = await fetch('/sessions').then(r => r.json());
+        if (!sessions.find(s => s.id === sessionId)) {
+          term.write('\r\n\x1b[33m[session ended]\x1b[0m\r\n');
+          setTimeout(() => { if (currentSessionId === sessionId) showSessionList(); }, 1500);
+          return;
+        }
+      } catch { /* サーバー到達不能なら再接続を試みる */ }
+      connectWs(sessionId);
     }, 3000);
   };
 

@@ -111,7 +111,7 @@ async fn create_session(
         .unwrap()
         .as_secs();
 
-    let session = spawn_session(id.clone(), name, created_at).map_err(|e| {
+    let session = spawn_session(id.clone(), name, created_at, state.sessions.clone()).map_err(|e| {
         tracing::error!("spawn_session failed: {e}");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
@@ -136,6 +136,7 @@ fn spawn_session(
     id: String,
     name: String,
     created_at: u64,
+    sessions: Sessions,
 ) -> Result<Session, Box<dyn std::error::Error + Send + Sync>> {
     let pty_system = native_pty_system();
     let pair = pty_system.openpty(PtySize {
@@ -159,7 +160,9 @@ fn spawn_session(
     let scrollback: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
 
     // PTY reader → broadcast channel + scrollback ring buffer
+    // シェル終了時にレジストリから自動削除する
     let id_for_log = id.clone();
+    let id_for_cleanup = id.clone();
     let tx_clone = tx.clone();
     let scrollback_clone = scrollback.clone();
     std::thread::spawn(move || {
@@ -182,7 +185,8 @@ fn spawn_session(
                 }
             }
         }
-        tracing::info!("PTY reader exited for session {id_for_log}");
+        sessions.lock().unwrap().remove(&id_for_cleanup);
+        tracing::info!("Session {id_for_log} removed after shell exit");
     });
 
     // PTY writer — stays alive across WebSocket reconnects
