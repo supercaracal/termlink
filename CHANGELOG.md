@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Server connection status indicator (dot + label) in the session list toolbar, showing "Connected" or "Server offline" based on polling results
+- "New Session" button is disabled automatically when the server is unreachable
+
 ## [0.1.4] - 2026-04-30
 
 ### Added

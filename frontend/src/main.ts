@@ -21,6 +21,8 @@ const backBtn          = document.getElementById('back-btn')!;
 const sessionNameLabel = document.getElementById('session-name-label')!;
 const statusDot        = document.getElementById('status-dot')!;
 const statusText       = document.getElementById('status-text')!;
+const serverDot        = document.getElementById('server-dot')!;
+const serverText       = document.getElementById('server-text')!;
 const termContainer    = document.getElementById('terminal-container')!;
 
 // ── xterm setup ───────────────────────────────────────────────────────────────
@@ -53,6 +55,10 @@ function showSessionList() {
   terminalView.style.display = 'none';
   sessionListView.style.display = 'flex';
 
+  serverDot.className = '';
+  serverText.textContent = 'Checking…';
+  newSessionBtn.disabled = false;
+
   loadSessions();
   refreshTimer = setInterval(loadSessions, 5000);
 }
@@ -74,13 +80,20 @@ function showTerminal(session: SessionInfo) {
 }
 
 // ── Session API ───────────────────────────────────────────────────────────────
+function setServerStatus(online: boolean) {
+  serverDot.className = online ? 'online' : 'offline';
+  serverText.textContent = online ? 'Connected' : 'Server offline';
+  newSessionBtn.disabled = !online;
+}
+
 async function loadSessions() {
   try {
     const res = await fetch('/sessions');
     const sessions: SessionInfo[] = await res.json();
+    setServerStatus(true);
     renderSessionList(sessions);
   } catch {
-    // server unreachable — keep existing list
+    setServerStatus(false);
   }
 }
 
@@ -231,10 +244,7 @@ resizeObserver.observe(termContainer);
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 newSessionBtn.addEventListener('click', createSession);
-backBtn.addEventListener('click', () => {
-  newSessionBtn.disabled = false;
-  showSessionList();
-});
+backBtn.addEventListener('click', showSessionList);
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 showSessionList();

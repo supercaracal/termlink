@@ -30,6 +30,22 @@
       color: #d4d4d4;
       letter-spacing: 0.05em;
     }
+    #server-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #888;
+    }
+    #server-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #888;
+      flex-shrink: 0;
+    }
+    #server-dot.online  { background: #4caf50; }
+    #server-dot.offline { background: #f44336; }
     #new-session-btn {
       background: #007acc;
       color: #fff;
@@ -134,6 +150,10 @@
   <div id="session-list-view">
     <div id="toolbar">
       <h1>termlink</h1>
+      <span id="server-status">
+        <span id="server-dot"></span>
+        <span id="server-text">Connecting…</span>
+      </span>
       <button id="new-session-btn">+ New Session</button>
     </div>
     <div id="session-list">
