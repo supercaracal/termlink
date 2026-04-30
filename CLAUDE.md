@@ -1,5 +1,9 @@
 # termlink
 
+## Language
+
+Always use English for all natural language: comments, commit messages, CHANGELOG entries, and documentation.
+
 ## CHANGELOG
 
 When making changes that will be released, update `CHANGELOG.md`:
