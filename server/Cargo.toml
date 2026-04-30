@@ -20,3 +20,6 @@ tower-http = { version = "0.5", features = ["cors"] }
 rust-embed = "8"
 axum-embed = "0.1"
 uuid = { version = "1", features = ["v4"] }
+
+[profile.release]
+strip = true
