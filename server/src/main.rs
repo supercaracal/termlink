@@ -239,6 +239,7 @@ async fn handle_socket(
     master: Arc<Mutex<Box<dyn MasterPty + Send>>>,
 ) {
     let mut rx = tx.subscribe();
+    drop(tx); // release sender so channel closes when the session is removed
     let (mut ws_sink, mut ws_stream) = socket.split();
 
     // アタッチ時に scrollback を再送してスクリーン状態を復元
