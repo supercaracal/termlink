@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd ./server && cargo clippy --no-deps --all-targets -- -D warnings && cargo fmt -- --check"
+          }
+        ]
+      }
+    ]
+  }
+}

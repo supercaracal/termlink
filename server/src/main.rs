@@ -13,11 +13,11 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use axum_embed::ServeEmbed;
 use futures_util::{SinkExt, StreamExt};
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
-use serde::{Deserialize, Serialize};
-use axum_embed::ServeEmbed;
 use rust_embed::RustEmbed;
+use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
@@ -70,8 +70,7 @@ enum ControlMessage {
 async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
@@ -115,20 +114,18 @@ async fn create_session(
         .unwrap()
         .as_secs();
 
-    let session = spawn_session(id.clone(), name, created_at, state.sessions.clone()).map_err(|e| {
-        tracing::error!("spawn_session failed: {e}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let session =
+        spawn_session(id.clone(), name, created_at, state.sessions.clone()).map_err(|e| {
+            tracing::error!("spawn_session failed: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     let info = session.info.clone();
     state.sessions.lock().unwrap().insert(id, session);
     Ok(Json(info))
 }
 
-async fn delete_session(
-    State(state): State<AppState>,
-    Path(id): Path<String>,
-) -> StatusCode {
+async fn delete_session(State(state): State<AppState>, Path(id): Path<String>) -> StatusCode {
     if state.sessions.lock().unwrap().remove(&id).is_some() {
         StatusCode::NO_CONTENT
     } else {
@@ -205,7 +202,11 @@ fn spawn_session(
     });
 
     Ok(Session {
-        info: SessionInfo { id, name, created_at },
+        info: SessionInfo {
+            id,
+            name,
+            created_at,
+        },
         tx,
         scrollback,
         pty_in_tx,
@@ -250,7 +251,11 @@ async fn handle_socket(
     // Take a snapshot inside a block to drop the MutexGuard before the await.
     let snapshot = {
         let sb = scrollback.lock().unwrap();
-        if sb.is_empty() { None } else { Some(sb.clone()) }
+        if sb.is_empty() {
+            None
+        } else {
+            Some(sb.clone())
+        }
     };
     if let Some(data) = snapshot {
         if ws_sink.send(Message::Binary(data)).await.is_err() {
