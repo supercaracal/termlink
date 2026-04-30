@@ -1,0 +1,44 @@
+<\!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser Terminal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #1e1e1e; }
+    body { display: flex; flex-direction: column; }
+    #terminal-container {
+      flex: 1;
+      padding: 4px;
+      overflow: hidden;
+    }
+    #status-bar {
+      height: 22px;
+      background: #007acc;
+      color: #fff;
+      font: 12px/22px 'Menlo', 'Monaco', monospace;
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    #status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4caf50;
+    }
+    #status-dot.disconnected { background: #f44336; }
+  </style>
+</head>
+<body>
+  <div id="status-bar">
+    <span id="status-dot"></span>
+    <span id="status-text">Connecting…</span>
+  </div>
+  <div id="terminal-container"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
