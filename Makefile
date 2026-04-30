@@ -2,7 +2,7 @@ MAKEFLAGS += --warn-undefined-variables
 SHELL     := /bin/bash -euo pipefail
 
 run: build
-	cd server && STATIC_DIR=static ./target/release/server
+	./server/target/release/server
 
 build: build-frontend build-server
 
