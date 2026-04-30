@@ -36,5 +36,6 @@ jobs:
           bin: server
           target: ${{ matrix.target }}
           archive: termlink-$target
+          manifest-path: server/Cargo.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
