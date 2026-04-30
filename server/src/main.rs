@@ -149,7 +149,7 @@ fn spawn_session(
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".into());
     let cmd = CommandBuilder::new(&shell);
     pair.slave.spawn_command(cmd)?;
-    // slave はコマンドのスポーン後に解放して master 側の EOF を防ぐ
+    // Drop slave after spawning the command to prevent EOF on the master side
     drop(pair.slave);
 
     let master: Arc<Mutex<Box<dyn MasterPty + Send>>> = Arc::new(Mutex::new(pair.master));
@@ -160,7 +160,7 @@ fn spawn_session(
     let scrollback: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
 
     // PTY reader → broadcast channel + scrollback ring buffer
-    // シェル終了時にレジストリから自動削除する
+    // Auto-remove from the registry when the shell exits
     let id_for_log = id.clone();
     let id_for_cleanup = id.clone();
     let tx_clone = tx.clone();
@@ -242,8 +242,8 @@ async fn handle_socket(
     drop(tx); // release sender so channel closes when the session is removed
     let (mut ws_sink, mut ws_stream) = socket.split();
 
-    // アタッチ時に scrollback を再送してスクリーン状態を復元
-    // MutexGuard を await の前に解放するためブロックでスナップショットを取る
+    // Replay scrollback on attach to restore screen state.
+    // Take a snapshot inside a block to drop the MutexGuard before the await.
     let snapshot = {
         let sb = scrollback.lock().unwrap();
         if sb.is_empty() { None } else { Some(sb.clone()) }
@@ -254,11 +254,11 @@ async fn handle_socket(
         }
     }
 
-    // PTY 出力と WebSocket 入力を select! で多重化する。
-    // fwd_task を分離すると ws_sink と ws_stream が別タスクに分かれ、
-    // fwd_task 終了後も ws_stream がコネクションを保持したまま残るため
-    // ブラウザ側で onclose が発火しない。統合することで PTY 終了時に
-    // ループを抜けて Close frame を明示的に送れる。
+    // Multiplex PTY output and WebSocket input with select!.
+    // Splitting into a separate fwd_task would split ws_sink and ws_stream across tasks;
+    // ws_stream would keep the connection alive after fwd_task exits, preventing the
+    // browser's onclose from firing. Keeping them together lets us break out of the loop
+    // on PTY exit and send a Close frame explicitly.
     loop {
         tokio::select! {
             result = rx.recv() => {
@@ -295,6 +295,6 @@ async fn handle_socket(
         }
     }
 
-    // PTY 終了などでループを抜けた場合、Close frame を送ってブラウザの onclose を確実に発火させる
+    // Send a Close frame when the loop exits (e.g. PTY died) to reliably trigger the browser's onclose
     let _ = ws_sink.send(Message::Close(None)).await;
 }

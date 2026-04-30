@@ -193,7 +193,7 @@ function connectWs(sessionId: string) {
     term.write('\r\n\x1b[31m[disconnected]\x1b[0m\r\n');
     setTimeout(async () => {
       if (currentSessionId !== sessionId) return;
-      // セッションがサーバー側で削除されていたら（shell exit など）リストに戻る
+      // If the session was removed on the server side (e.g. shell exit), go back to the list
       try {
         const sessions: SessionInfo[] = await fetch('/sessions').then(r => r.json());
         if (!sessions.find(s => s.id === sessionId)) {
@@ -201,7 +201,7 @@ function connectWs(sessionId: string) {
           setTimeout(() => { if (currentSessionId === sessionId) showSessionList(); }, 1500);
           return;
         }
-      } catch { /* サーバー到達不能なら再接続を試みる */ }
+      } catch { /* server unreachable — fall through to reconnect */ }
       connectWs(sessionId);
     }, 3000);
   };
