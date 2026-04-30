@@ -1,6 +1,6 @@
-import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
+import { Terminal } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
 
 const ENCODER = new TextEncoder();
@@ -12,18 +12,20 @@ interface SessionInfo {
 }
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const sessionListView  = document.getElementById('session-list-view')!;
-const terminalView     = document.getElementById('terminal-view')!;
-const sessionListEl    = document.getElementById('session-list')!;
-const emptyMsg         = document.getElementById('empty-msg')!;
-const newSessionBtn    = document.getElementById('new-session-btn') as HTMLButtonElement;
-const backBtn          = document.getElementById('back-btn')!;
+const sessionListView = document.getElementById('session-list-view')!;
+const terminalView = document.getElementById('terminal-view')!;
+const sessionListEl = document.getElementById('session-list')!;
+const emptyMsg = document.getElementById('empty-msg')!;
+const newSessionBtn = document.getElementById(
+  'new-session-btn',
+) as HTMLButtonElement;
+const backBtn = document.getElementById('back-btn')!;
 const sessionNameLabel = document.getElementById('session-name-label')!;
-const statusDot        = document.getElementById('status-dot')!;
-const statusText       = document.getElementById('status-text')!;
-const serverDot        = document.getElementById('server-dot')!;
-const serverText       = document.getElementById('server-text')!;
-const termContainer    = document.getElementById('terminal-container')!;
+const statusDot = document.getElementById('status-dot')!;
+const statusText = document.getElementById('status-text')!;
+const serverDot = document.getElementById('server-dot')!;
+const serverText = document.getElementById('server-text')!;
+const termContainer = document.getElementById('terminal-container')!;
 
 // ── xterm setup ───────────────────────────────────────────────────────────────
 const term = new Terminal({
@@ -111,11 +113,13 @@ function renderSessionList(sessions: SessionInfo[]) {
 
   // Build id→card map of existing cards for diffing
   const existing = new Map<string, Element>();
-  for (const card of sessionListEl.querySelectorAll<HTMLElement>('.session-card')) {
+  for (const card of sessionListEl.querySelectorAll<HTMLElement>(
+    '.session-card',
+  )) {
     existing.set(card.dataset.id!, card);
   }
 
-  const ids = new Set(sessions.map(s => s.id));
+  const ids = new Set(sessions.map((s) => s.id));
 
   // Remove stale cards
   for (const [id, el] of existing) {
@@ -139,7 +143,9 @@ function renderSessionList(sessions: SessionInfo[]) {
 
     const timeEl = document.createElement('span');
     timeEl.className = 'session-time';
-    timeEl.textContent = new Date(session.created_at * 1000).toLocaleTimeString();
+    timeEl.textContent = new Date(
+      session.created_at * 1000,
+    ).toLocaleTimeString();
 
     meta.append(nameEl, timeEl);
 
@@ -208,13 +214,19 @@ function connectWs(sessionId: string) {
       if (currentSessionId !== sessionId) return;
       // If the session was removed on the server side (e.g. shell exit), go back to the list
       try {
-        const sessions: SessionInfo[] = await fetch('/sessions').then(r => r.json());
-        if (!sessions.find(s => s.id === sessionId)) {
+        const sessions: SessionInfo[] = await fetch('/sessions').then((r) =>
+          r.json(),
+        );
+        if (!sessions.find((s) => s.id === sessionId)) {
           term.write('\r\n\x1b[33m[session ended]\x1b[0m\r\n');
-          setTimeout(() => { if (currentSessionId === sessionId) showSessionList(); }, 1500);
+          setTimeout(() => {
+            if (currentSessionId === sessionId) showSessionList();
+          }, 1500);
           return;
         }
-      } catch { /* server unreachable — fall through to reconnect */ }
+      } catch {
+        /* server unreachable — fall through to reconnect */
+      }
       connectWs(sessionId);
     }, 3000);
   };
@@ -226,7 +238,9 @@ function connectWs(sessionId: string) {
 
 function sendResize() {
   if (ws?.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+    ws.send(
+      JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }),
+    );
   }
 }
 
