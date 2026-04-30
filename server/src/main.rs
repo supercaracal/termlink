@@ -253,41 +253,47 @@ async fn handle_socket(
         }
     }
 
-    let fwd_task = tokio::spawn(async move {
-        loop {
-            match rx.recv().await {
-                Ok(data) => {
-                    if ws_sink.send(Message::Binary(data)).await.is_err() {
-                        break;
+    // PTY 出力と WebSocket 入力を select! で多重化する。
+    // fwd_task を分離すると ws_sink と ws_stream が別タスクに分かれ、
+    // fwd_task 終了後も ws_stream がコネクションを保持したまま残るため
+    // ブラウザ側で onclose が発火しない。統合することで PTY 終了時に
+    // ループを抜けて Close frame を明示的に送れる。
+    loop {
+        tokio::select! {
+            result = rx.recv() => {
+                match result {
+                    Ok(data) => {
+                        if ws_sink.send(Message::Binary(data)).await.is_err() {
+                            break;
+                        }
                     }
-                }
-                Err(broadcast::error::RecvError::Lagged(_)) => continue,
-                Err(broadcast::error::RecvError::Closed) => break,
-            }
-        }
-    });
-
-    while let Some(Ok(msg)) = ws_stream.next().await {
-        match msg {
-            Message::Binary(data) => {
-                let _ = pty_in_tx.send(data);
-            }
-            Message::Text(text) => {
-                if let Ok(ControlMessage::Resize { cols, rows }) = serde_json::from_str(&text) {
-                    if let Ok(m) = master.lock() {
-                        let _ = m.resize(PtySize {
-                            rows,
-                            cols,
-                            pixel_width: 0,
-                            pixel_height: 0,
-                        });
-                    }
+                    Err(broadcast::error::RecvError::Lagged(_)) => {}
+                    Err(broadcast::error::RecvError::Closed) => break,
                 }
             }
-            Message::Close(_) => break,
-            _ => {}
+            msg = ws_stream.next() => {
+                match msg {
+                    Some(Ok(Message::Binary(data))) => {
+                        let _ = pty_in_tx.send(data);
+                    }
+                    Some(Ok(Message::Text(text))) => {
+                        if let Ok(ControlMessage::Resize { cols, rows }) = serde_json::from_str(&text) {
+                            if let Ok(m) = master.lock() {
+                                let _ = m.resize(PtySize {
+                                    rows,
+                                    cols,
+                                    pixel_width: 0,
+                                    pixel_height: 0,
+                                });
+                            }
+                        }
+                    }
+                    _ => break,
+                }
+            }
         }
     }
 
-    fwd_task.abort();
+    // PTY 終了などでループを抜けた場合、Close frame を送ってブラウザの onclose を確実に発火させる
+    let _ = ws_sink.send(Message::Close(None)).await;
 }
