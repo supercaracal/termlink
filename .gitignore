@@ -1,0 +1,13 @@
+# Rust
+target/
+Cargo.lock
+
+# Node.js
+node_modules/
+dist/
+
+# Build output
+server/static/
+
+# OS
+.DS_Store
