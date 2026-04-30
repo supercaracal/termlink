@@ -16,9 +16,14 @@ use axum::{
 use futures_util::{SinkExt, StreamExt};
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use serde::{Deserialize, Serialize};
+use axum_embed::ServeEmbed;
+use rust_embed::RustEmbed;
 use tokio::sync::broadcast;
-use tower_http::services::ServeDir;
 use uuid::Uuid;
+
+#[derive(RustEmbed, Clone)]
+#[folder = "static/"]
+struct StaticAssets;
 
 const SCROLLBACK_LIMIT: usize = 65536; // 64 KB
 const BROADCAST_CAP: usize = 256;
@@ -70,7 +75,6 @@ async fn main() {
         )
         .init();
 
-    let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "static".into());
     let bind_addr = std::env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".into());
 
     let state = AppState {
@@ -82,11 +86,11 @@ async fn main() {
         .route("/sessions", post(create_session))
         .route("/sessions/:id", delete(delete_session))
         .route("/ws", get(ws_handler))
-        .fallback_service(ServeDir::new(&static_dir))
+        .fallback_service(ServeEmbed::<StaticAssets>::new())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(&bind_addr).await.unwrap();
-    tracing::info!("Listening on http://{bind_addr}  (static: {static_dir})");
+    tracing::info!("Listening on http://{bind_addr}");
     axum::serve(listener, app).await.unwrap();
 }
 
