@@ -3,9 +3,27 @@ import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
 
-const RECONNECT_DELAY_MS = 3000;
 const ENCODER = new TextEncoder();
 
+interface SessionInfo {
+  id: string;
+  name: string;
+  created_at: number; // unix seconds
+}
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const sessionListView  = document.getElementById('session-list-view')!;
+const terminalView     = document.getElementById('terminal-view')!;
+const sessionListEl    = document.getElementById('session-list')!;
+const emptyMsg         = document.getElementById('empty-msg')!;
+const newSessionBtn    = document.getElementById('new-session-btn') as HTMLButtonElement;
+const backBtn          = document.getElementById('back-btn')!;
+const sessionNameLabel = document.getElementById('session-name-label')!;
+const statusDot        = document.getElementById('status-dot')!;
+const statusText       = document.getElementById('status-text')!;
+const termContainer    = document.getElementById('terminal-container')!;
+
+// ── xterm setup ───────────────────────────────────────────────────────────────
 const term = new Terminal({
   cursorBlink: true,
   fontSize: 14,
@@ -17,28 +35,144 @@ const term = new Terminal({
     selectionBackground: '#264f78',
   },
 });
-
 const fitAddon = new FitAddon();
 term.loadAddon(fitAddon);
 term.loadAddon(new WebLinksAddon());
+term.open(termContainer);
 
-const container = document.getElementById('terminal-container')!;
-const statusDot = document.getElementById('status-dot')!;
-const statusText = document.getElementById('status-text')!;
+// ── State ─────────────────────────────────────────────────────────────────────
+let ws: WebSocket | null = null;
+let currentSessionId: string | null = null;
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
-term.open(container);
-fitAddon.fit();
+// ── Views ─────────────────────────────────────────────────────────────────────
+function showSessionList() {
+  currentSessionId = null;
+  disconnectWs();
 
+  terminalView.style.display = 'none';
+  sessionListView.style.display = 'flex';
+
+  loadSessions();
+  refreshTimer = setInterval(loadSessions, 5000);
+}
+
+function showTerminal(session: SessionInfo) {
+  if (refreshTimer !== null) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+
+  sessionListView.style.display = 'none';
+  terminalView.style.display = 'flex';
+  sessionNameLabel.textContent = session.name;
+
+  currentSessionId = session.id;
+  term.reset();
+  fitAddon.fit();
+  connectWs(session.id);
+}
+
+// ── Session API ───────────────────────────────────────────────────────────────
+async function loadSessions() {
+  try {
+    const res = await fetch('/sessions');
+    const sessions: SessionInfo[] = await res.json();
+    renderSessionList(sessions);
+  } catch {
+    // server unreachable — keep existing list
+  }
+}
+
+function renderSessionList(sessions: SessionInfo[]) {
+  if (sessions.length === 0) {
+    emptyMsg.style.display = 'block';
+    // remove old cards
+    for (const card of sessionListEl.querySelectorAll('.session-card')) {
+      card.remove();
+    }
+    return;
+  }
+
+  emptyMsg.style.display = 'none';
+
+  // Build id→card map of existing cards for diffing
+  const existing = new Map<string, Element>();
+  for (const card of sessionListEl.querySelectorAll<HTMLElement>('.session-card')) {
+    existing.set(card.dataset.id!, card);
+  }
+
+  const ids = new Set(sessions.map(s => s.id));
+
+  // Remove stale cards
+  for (const [id, el] of existing) {
+    if (!ids.has(id)) el.remove();
+  }
+
+  // Add/update cards in order
+  for (const session of sessions) {
+    if (existing.has(session.id)) continue; // already rendered
+
+    const card = document.createElement('div');
+    card.className = 'session-card';
+    card.dataset.id = session.id;
+
+    const meta = document.createElement('div');
+    meta.className = 'session-meta';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'session-name';
+    nameEl.textContent = session.name;
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'session-time';
+    timeEl.textContent = new Date(session.created_at * 1000).toLocaleTimeString();
+
+    meta.append(nameEl, timeEl);
+
+    const btn = document.createElement('button');
+    btn.className = 'attach-btn';
+    btn.textContent = 'Attach';
+    btn.addEventListener('click', () => showTerminal(session));
+
+    card.append(meta, btn);
+    sessionListEl.appendChild(card);
+  }
+}
+
+async function createSession() {
+  newSessionBtn.disabled = true;
+  try {
+    const res = await fetch('/sessions', { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to create session');
+    const session: SessionInfo = await res.json();
+    showTerminal(session);
+  } catch (e) {
+    console.error(e);
+    newSessionBtn.disabled = false;
+  }
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
 function setStatus(connected: boolean, message: string) {
   statusDot.className = connected ? '' : 'disconnected';
   statusText.textContent = message;
 }
 
-let ws: WebSocket | null = null;
+function disconnectWs() {
+  if (ws) {
+    ws.onclose = null;
+    ws.close();
+    ws = null;
+  }
+}
 
-function connect() {
+function connectWs(sessionId: string) {
+  disconnectWs();
+  setStatus(false, 'Connecting…');
+
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${protocol}//${location.host}/ws`);
+  ws = new WebSocket(`${protocol}//${location.host}/ws?session=${sessionId}`);
   ws.binaryType = 'arraybuffer';
 
   ws.onopen = () => {
@@ -53,9 +187,13 @@ function connect() {
   };
 
   ws.onclose = () => {
-    setStatus(false, `Disconnected — reconnecting in ${RECONNECT_DELAY_MS / 1000}s…`);
+    // Only reconnect if we're still on this session
+    if (currentSessionId !== sessionId) return;
+    setStatus(false, 'Disconnected — reconnecting in 3s…');
     term.write('\r\n\x1b[31m[disconnected]\x1b[0m\r\n');
-    setTimeout(connect, RECONNECT_DELAY_MS);
+    setTimeout(() => {
+      if (currentSessionId === sessionId) connectWs(sessionId);
+    }, 3000);
   };
 
   ws.onerror = () => {
@@ -79,6 +217,14 @@ const resizeObserver = new ResizeObserver(() => {
   fitAddon.fit();
   sendResize();
 });
-resizeObserver.observe(container);
+resizeObserver.observe(termContainer);
 
-connect();
+// ── Event listeners ───────────────────────────────────────────────────────────
+newSessionBtn.addEventListener('click', createSession);
+backBtn.addEventListener('click', () => {
+  newSessionBtn.disabled = false;
+  showSessionList();
+});
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+showSessionList();
