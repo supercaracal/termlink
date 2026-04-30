@@ -8,7 +8,7 @@ use axum::{
     Router,
 };
 use futures_util::{SinkExt, StreamExt};
-use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize, PtySystem};
+use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use serde::Deserialize;
 use tokio::sync::mpsc;
 use tower_http::services::ServeDir;
@@ -36,7 +36,7 @@ async fn main() {
         .fallback_service(ServeDir::new(&static_dir));
 
     let listener = tokio::net::TcpListener::bind(&bind_addr).await.unwrap();
-    tracing::info\!("Listening on http://{bind_addr}  (static: {static_dir})");
+    tracing::info!("Listening on http://{bind_addr}  (static: {static_dir})");
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -54,7 +54,7 @@ async fn handle_socket(socket: WebSocket) {
     }) {
         Ok(p) => p,
         Err(e) => {
-            tracing::error\!("openpty failed: {e}");
+            tracing::error!("openpty failed: {e}");
             return;
         }
     };
@@ -64,7 +64,7 @@ async fn handle_socket(socket: WebSocket) {
     let _child = match pair.slave.spawn_command(cmd) {
         Ok(c) => c,
         Err(e) => {
-            tracing::error\!("spawn_command failed: {e}");
+            tracing::error!("spawn_command failed: {e}");
             return;
         }
     };
@@ -110,7 +110,7 @@ async fn handle_socket(socket: WebSocket) {
     let fwd_task = tokio::spawn(async move {
         while let Some(data) = pty_out_rx.recv().await {
             if ws_sink
-                .send(Message::Binary(bytes::Bytes::from(data)))
+                .send(Message::Binary(data))
                 .await
                 .is_err()
             {
@@ -123,7 +123,7 @@ async fn handle_socket(socket: WebSocket) {
     while let Some(Ok(msg)) = ws_stream.next().await {
         match msg {
             Message::Binary(data) => {
-                let _ = pty_in_tx.send(data.to_vec());
+                let _ = pty_in_tx.send(data);
             }
             Message::Text(text) => {
                 if let Ok(ControlMessage::Resize { cols, rows }) =

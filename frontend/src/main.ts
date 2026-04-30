@@ -22,9 +22,9 @@ const fitAddon = new FitAddon();
 term.loadAddon(fitAddon);
 term.loadAddon(new WebLinksAddon());
 
-const container = document.getElementById('terminal-container')\!;
-const statusDot = document.getElementById('status-dot')\!;
-const statusText = document.getElementById('status-text')\!;
+const container = document.getElementById('terminal-container')!;
+const statusDot = document.getElementById('status-dot')!;
+const statusText = document.getElementById('status-text')!;
 
 term.open(container);
 fitAddon.fit();
