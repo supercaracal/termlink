@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-04-30
+
+### Added
+- Biome linter and formatter for the frontend (TypeScript/Vite)
+- `make lint`, `make lint-frontend`, `make lint-server` targets to the Makefile
+- Claude Code Stop hook that runs `make lint` after every response
+
+### Fixed
+- Applied Biome auto-fixes to existing frontend code: import order, formatting, and missing `type` attributes on `<button>` elements
+
 ## [0.1.5] - 2026-04-30
 
 ### Added
