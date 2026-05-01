@@ -49,8 +49,16 @@ let ws: WebSocket | null = null;
 let currentSessionId: string | null = null;
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
+// ── URL routing ───────────────────────────────────────────────────────────────
+function sessionIdFromPath(): string | null {
+  const match = location.pathname.match(/^\/sessions\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
 // ── Views ─────────────────────────────────────────────────────────────────────
-function showSessionList() {
+function showSessionList(push = true) {
+  if (push) history.pushState(null, '', '/');
+
   currentSessionId = null;
   disconnectWs();
 
@@ -65,7 +73,9 @@ function showSessionList() {
   refreshTimer = setInterval(loadSessions, 5000);
 }
 
-function showTerminal(session: SessionInfo) {
+function showTerminal(session: SessionInfo, push = true) {
+  if (push) history.pushState({ sessionId: session.id }, '', `/sessions/${session.id}`);
+
   if (refreshTimer !== null) {
     clearInterval(refreshTimer);
     refreshTimer = null;
@@ -258,7 +268,41 @@ resizeObserver.observe(termContainer);
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 newSessionBtn.addEventListener('click', createSession);
-backBtn.addEventListener('click', showSessionList);
+backBtn.addEventListener('click', () => showSessionList());
+
+window.addEventListener('popstate', async () => {
+  const id = sessionIdFromPath();
+  if (id) {
+    try {
+      const sessions: SessionInfo[] = await fetch('/sessions').then((r) => r.json());
+      const session = sessions.find((s) => s.id === id);
+      if (session) {
+        showTerminal(session, false);
+        return;
+      }
+    } catch {
+      /* fall through to session list */
+    }
+  }
+  showSessionList(false);
+});
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
-showSessionList();
+async function bootstrap() {
+  const id = sessionIdFromPath();
+  if (id) {
+    try {
+      const sessions: SessionInfo[] = await fetch('/sessions').then((r) => r.json());
+      const session = sessions.find((s) => s.id === id);
+      if (session) {
+        showTerminal(session, false);
+        return;
+      }
+    } catch {
+      /* fall through to session list */
+    }
+  }
+  showSessionList(false);
+}
+
+bootstrap();
