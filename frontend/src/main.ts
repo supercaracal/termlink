@@ -19,6 +19,9 @@ const emptyMsg = document.getElementById('empty-msg')!;
 const newSessionBtn = document.getElementById(
   'new-session-btn',
 ) as HTMLButtonElement;
+const sessionNameInput = document.getElementById(
+  'session-name-input',
+) as HTMLInputElement;
 const backBtn = document.getElementById('back-btn')!;
 const sessionNameLabel = document.getElementById('session-name-label')!;
 const statusDot = document.getElementById('status-dot')!;
@@ -172,10 +175,13 @@ function renderSessionList(sessions: SessionInfo[]) {
 
 async function createSession() {
   newSessionBtn.disabled = true;
+  const name = sessionNameInput.value.trim();
+  const url = name ? `/sessions?name=${encodeURIComponent(name)}` : '/sessions';
   try {
-    const res = await fetch('/sessions', { method: 'POST' });
+    const res = await fetch(url, { method: 'POST' });
     if (!res.ok) throw new Error('Failed to create session');
     const session: SessionInfo = await res.json();
+    sessionNameInput.value = '';
     showTerminal(session);
   } catch (e) {
     console.error(e);
@@ -270,6 +276,9 @@ resizeObserver.observe(termContainer);
 // ── Event listeners ───────────────────────────────────────────────────────────
 newSessionBtn.addEventListener('click', createSession);
 backBtn.addEventListener('click', () => showSessionList());
+sessionNameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') createSession();
+});
 
 window.addEventListener('popstate', async () => {
   const id = sessionIdFromPath();

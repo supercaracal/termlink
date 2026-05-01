@@ -46,6 +46,18 @@
     }
     #server-dot.online  { background: #4caf50; }
     #server-dot.offline { background: #f44336; }
+    #new-session-controls { display: flex; gap: 8px; align-items: center; }
+    #session-name-input {
+      background: #3c3c3c;
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font: 12px/1 'Menlo', monospace;
+      padding: 6px 10px;
+      width: 180px;
+    }
+    #session-name-input::placeholder { color: #666; }
+    #session-name-input:focus { outline: none; border-color: #007acc; }
     #new-session-btn {
       background: #007acc;
       color: #fff;
@@ -154,7 +166,10 @@
         <span id="server-dot"></span>
         <span id="server-text">Connecting…</span>
       </span>
-      <button id="new-session-btn" type="button">+ New Session</button>
+      <div id="new-session-controls">
+        <input id="session-name-input" type="text" placeholder="Session name (optional)" />
+        <button id="new-session-btn" type="button">+ New Session</button>
+      </div>
     </div>
     <div id="session-list">
       <p id="empty-msg">No sessions. Click "+ New Session" to start one.</p>
