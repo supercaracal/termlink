@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Terminal auto-focuses when a session is opened, so typing works immediately without clicking
+- Browser keyboard shortcuts (e.g. Ctrl+W, Ctrl+R, Ctrl+L) are suppressed while the terminal is focused, sending all keystrokes to the shell instead; devtools shortcuts (Ctrl+Shift+I/J/C, F12) remain accessible
+
 ## [0.1.7] - 2026-05-01
 
 ### Added
