@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-05-01
+
 ### Added
 - Terminal auto-focuses when a session is opened, so typing works immediately without clicking
 - Closing the tab or window while a terminal session is active now shows a browser confirmation dialog, preventing accidental loss of the session via Ctrl+W (Ctrl+W is reserved by browsers and cannot be intercepted by JavaScript)
