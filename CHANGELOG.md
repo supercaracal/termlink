@@ -8,11 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Terminal auto-focuses when a session is opened, so typing works immediately without clicking
-- Browser keyboard shortcuts (e.g. Ctrl+R, Ctrl+L, Ctrl+F) are suppressed while the terminal is visible, sending keystrokes to the shell instead; devtools shortcuts (Ctrl+Shift+I/J/C, F12) remain accessible
 - Closing the tab or window while a terminal session is active now shows a browser confirmation dialog, preventing accidental loss of the session via Ctrl+W (Ctrl+W is reserved by browsers and cannot be intercepted by JavaScript)
 
-### Fixed
-- Browser shortcuts were not reliably suppressed because the previous implementation used xterm.js's `attachCustomKeyEventHandler`, which fires too late in the event lifecycle; replaced with a document-level capture-phase listener
+### Removed
+- Document-level capture keydown listener intended to suppress browser shortcuts (e.g. Ctrl+R, Ctrl+L); browser security prevents this from working reliably
 
 ## [0.1.7] - 2026-05-01
 
