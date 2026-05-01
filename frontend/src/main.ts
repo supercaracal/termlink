@@ -23,6 +23,7 @@ const sessionNameInput = document.getElementById(
   'session-name-input',
 ) as HTMLInputElement;
 const backBtn = document.getElementById('back-btn')!;
+const copyUrlBtn = document.getElementById('copy-url-btn')!;
 const sessionNameLabel = document.getElementById('session-name-label')!;
 const statusDot = document.getElementById('status-dot')!;
 const statusText = document.getElementById('status-text')!;
@@ -278,6 +279,14 @@ newSessionBtn.addEventListener('click', createSession);
 backBtn.addEventListener('click', () => showSessionList());
 sessionNameInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') createSession();
+});
+copyUrlBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(location.href);
+  const original = copyUrlBtn.textContent;
+  copyUrlBtn.textContent = 'Copied!';
+  setTimeout(() => {
+    copyUrlBtn.textContent = original;
+  }, 1500);
 });
 
 window.addEventListener('popstate', async () => {
