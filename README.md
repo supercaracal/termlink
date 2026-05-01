@@ -20,7 +20,7 @@ This builds the frontend, compiles the server, and starts it. Open http://127.0.
 To change the bind address:
 
 ```sh
-BIND_ADDR=0.0.0.0:8080 ./server/target/release/server
+make run BIND_ADDR=0.0.0.0:8080
 ```
 
 ## Usage
