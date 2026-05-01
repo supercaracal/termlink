@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- URL routing via the History API: navigating to a session now updates the URL to `/sessions/:id`, and the browser back/forward buttons work correctly
+- Direct URL access to `/sessions/:id` now serves the app and attaches to the session on load
+
 ## [0.1.6] - 2026-04-30
 
 ### Added

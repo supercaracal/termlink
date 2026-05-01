@@ -10,7 +10,7 @@ use axum::{
     },
     http::StatusCode,
     response::{IntoResponse, Json},
-    routing::{delete, get, post},
+    routing::{get, post},
     Router,
 };
 use axum_embed::ServeEmbed;
@@ -83,7 +83,7 @@ async fn main() {
     let app = Router::new()
         .route("/sessions", get(list_sessions))
         .route("/sessions", post(create_session))
-        .route("/sessions/:id", delete(delete_session))
+        .route("/sessions/:id", get(serve_index).delete(delete_session))
         .route("/ws", get(ws_handler))
         .fallback_service(ServeEmbed::<StaticAssets>::new())
         .with_state(state);
@@ -91,6 +91,17 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&bind_addr).await.unwrap();
     tracing::info!("Listening on http://{bind_addr}");
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn serve_index() -> impl IntoResponse {
+    match StaticAssets::get("index.html") {
+        Some(content) => (
+            [(axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8")],
+            content.data,
+        )
+            .into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
 }
 
 async fn list_sessions(State(state): State<AppState>) -> Json<Vec<SessionInfo>> {
