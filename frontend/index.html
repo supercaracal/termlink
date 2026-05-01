@@ -137,6 +137,17 @@
       flex-shrink: 0;
     }
     #back-btn:hover { background: rgba(255,255,255,0.25); }
+    #copy-url-btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      font: 11px/1 'Menlo', monospace;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #copy-url-btn:hover { background: rgba(255,255,255,0.25); }
     #session-name-label {
       font-weight: 600;
       flex: 1;
@@ -181,6 +192,7 @@
     <div id="status-bar">
       <button id="back-btn" type="button">&#8592; Sessions</button>
       <span id="session-name-label"></span>
+      <button id="copy-url-btn" type="button">Copy URL</button>
       <span id="status-dot" class="disconnected"></span>
       <span id="status-text">Connecting…</span>
     </div>
