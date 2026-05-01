@@ -48,6 +48,20 @@ term.loadAddon(fitAddon);
 term.loadAddon(new WebLinksAddon());
 term.open(termContainer);
 
+// Prevent browser shortcuts (e.g. Ctrl+W, Ctrl+R) from firing while the
+// terminal is focused; keep devtools shortcuts accessible.
+term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+  if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) return true;
+  if (e.key === 'F12') return true;
+  if (
+    (e.ctrlKey && /^[a-zA-Z]$/.test(e.key)) ||
+    (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight'))
+  ) {
+    e.preventDefault();
+  }
+  return true;
+});
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let ws: WebSocket | null = null;
 let currentSessionId: string | null = null;
@@ -94,6 +108,7 @@ function showTerminal(session: SessionInfo, push = true) {
   term.reset();
   fitAddon.fit();
   connectWs(session.id);
+  term.focus();
 }
 
 // ── Session API ───────────────────────────────────────────────────────────────
