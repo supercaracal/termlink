@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-05-01
+
 ### Added
 - Sessions can be named at creation time via an input field in the toolbar
-- Added a "Copy URL" button to the terminal status bar that copies the session URL to the clipboard
-- URL routing via the History API: navigating to a session now updates the URL to `/sessions/:id`, and the browser back/forward buttons work correctly
-- Direct URL access to `/sessions/:id` now serves the app and attaches to the session on load
+- "Copy URL" button in the terminal status bar copies the session URL to the clipboard
+- URL routing via the History API: navigating to a session updates the URL to `/sessions/:id`, and browser back/forward buttons work correctly
+- Direct URL access to `/sessions/:id` serves the app and attaches to the session on load
+- Build instructions and usage guide in README
 
 ## [0.1.6] - 2026-04-30
 
