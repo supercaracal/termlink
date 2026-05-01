@@ -48,25 +48,14 @@ term.loadAddon(fitAddon);
 term.loadAddon(new WebLinksAddon());
 term.open(termContainer);
 
-// Intercept browser shortcuts at the document capture phase — the earliest
-// point in event dispatch — so e.preventDefault() reliably suppresses actions
-// like Ctrl+W (close tab) before the browser commits to them.
-// Devtools shortcuts (Ctrl+Shift+I/J/C, F12) are left through intentionally.
-document.addEventListener(
-  'keydown',
-  (e: KeyboardEvent) => {
-    if (terminalView.style.display === 'none') return;
-    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) return;
-    if (e.key === 'F12') return;
-    if (
-      (e.ctrlKey && /^[a-zA-Z]$/.test(e.key)) ||
-      (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight'))
-    ) {
-      e.preventDefault();
-    }
-  },
-  { capture: true },
-);
+// Ctrl+W is reserved by browsers and cannot be suppressed via preventDefault().
+// Use beforeunload to prompt confirmation when a session is active, so users
+// don't accidentally close the tab mid-session.
+window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
+  if (currentSessionId === null) return;
+  e.preventDefault();
+  e.returnValue = ''; // required for Chrome to show the confirmation dialog
+});
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let ws: WebSocket | null = null;
