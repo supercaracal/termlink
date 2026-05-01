@@ -74,7 +74,8 @@ function showSessionList(push = true) {
 }
 
 function showTerminal(session: SessionInfo, push = true) {
-  if (push) history.pushState({ sessionId: session.id }, '', `/sessions/${session.id}`);
+  if (push)
+    history.pushState({ sessionId: session.id }, '', `/sessions/${session.id}`);
 
   if (refreshTimer !== null) {
     clearInterval(refreshTimer);
@@ -274,7 +275,9 @@ window.addEventListener('popstate', async () => {
   const id = sessionIdFromPath();
   if (id) {
     try {
-      const sessions: SessionInfo[] = await fetch('/sessions').then((r) => r.json());
+      const sessions: SessionInfo[] = await fetch('/sessions').then((r) =>
+        r.json(),
+      );
       const session = sessions.find((s) => s.id === id);
       if (session) {
         showTerminal(session, false);
@@ -292,7 +295,9 @@ async function bootstrap() {
   const id = sessionIdFromPath();
   if (id) {
     try {
-      const sessions: SessionInfo[] = await fetch('/sessions').then((r) => r.json());
+      const sessions: SessionInfo[] = await fetch('/sessions').then((r) =>
+        r.json(),
+      );
       const session = sessions.find((s) => s.id === id);
       if (session) {
         showTerminal(session, false);
