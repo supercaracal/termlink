@@ -48,19 +48,25 @@ term.loadAddon(fitAddon);
 term.loadAddon(new WebLinksAddon());
 term.open(termContainer);
 
-// Prevent browser shortcuts (e.g. Ctrl+W, Ctrl+R) from firing while the
-// terminal is focused; keep devtools shortcuts accessible.
-term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-  if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) return true;
-  if (e.key === 'F12') return true;
-  if (
-    (e.ctrlKey && /^[a-zA-Z]$/.test(e.key)) ||
-    (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight'))
-  ) {
-    e.preventDefault();
-  }
-  return true;
-});
+// Intercept browser shortcuts at the document capture phase — the earliest
+// point in event dispatch — so e.preventDefault() reliably suppresses actions
+// like Ctrl+W (close tab) before the browser commits to them.
+// Devtools shortcuts (Ctrl+Shift+I/J/C, F12) are left through intentionally.
+document.addEventListener(
+  'keydown',
+  (e: KeyboardEvent) => {
+    if (terminalView.style.display === 'none') return;
+    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) return;
+    if (e.key === 'F12') return;
+    if (
+      (e.ctrlKey && /^[a-zA-Z]$/.test(e.key)) ||
+      (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight'))
+    ) {
+      e.preventDefault();
+    }
+  },
+  { capture: true },
+);
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let ws: WebSocket | null = null;
