@@ -68,6 +68,15 @@ document.addEventListener(
   { capture: true },
 );
 
+// Ctrl+W is reserved by browsers and cannot be suppressed via preventDefault().
+// Use beforeunload to prompt confirmation when a session is active, so users
+// don't accidentally close the tab mid-session.
+window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
+  if (currentSessionId === null) return;
+  e.preventDefault();
+  e.returnValue = ''; // required for Chrome to show the confirmation dialog
+});
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let ws: WebSocket | null = null;
 let currentSessionId: string | null = null;
