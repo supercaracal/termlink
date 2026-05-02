@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-05-02
+
+### Added
+- Favicon displayed in browser tab
+
 ## [0.1.8] - 2026-05-01
 
 ### Added
