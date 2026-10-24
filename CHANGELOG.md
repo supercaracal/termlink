@@ -6,10 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [0.1.11] - 2026-10-25
+## [0.1.12] - 2026-10-25
+
+Versions 0.1.10 and 0.1.11 were skipped and never released.
+
+### Changed
+- Update dependencies, including axum 0.8, tower-http 0.7, and portable-pty 0.9
 
 ### Fixed
-- Update several dependencies
+- Release build failure caused by axum 0.8 breaking changes
 
 ## [0.1.9] - 2026-05-02
 

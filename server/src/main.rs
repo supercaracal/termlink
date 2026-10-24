@@ -83,7 +83,7 @@ async fn main() {
     let app = Router::new()
         .route("/sessions", get(list_sessions))
         .route("/sessions", post(create_session))
-        .route("/sessions/:id", get(serve_index).delete(delete_session))
+        .route("/sessions/{id}", get(serve_index).delete(delete_session))
         .route("/ws", get(ws_handler))
         .fallback_service(ServeEmbed::<StaticAssets>::new())
         .with_state(state);
@@ -269,7 +269,7 @@ async fn handle_socket(
         }
     };
     if let Some(data) = snapshot {
-        if ws_sink.send(Message::Binary(data)).await.is_err() {
+        if ws_sink.send(Message::Binary(data.into())).await.is_err() {
             return;
         }
     }
@@ -284,7 +284,7 @@ async fn handle_socket(
             result = rx.recv() => {
                 match result {
                     Ok(data) => {
-                        if ws_sink.send(Message::Binary(data)).await.is_err() {
+                        if ws_sink.send(Message::Binary(data.into())).await.is_err() {
                             break;
                         }
                     }
@@ -295,7 +295,7 @@ async fn handle_socket(
             msg = ws_stream.next() => {
                 match msg {
                     Some(Ok(Message::Binary(data))) => {
-                        let _ = pty_in_tx.send(data);
+                        let _ = pty_in_tx.send(data.to_vec());
                     }
                     Some(Ok(Message::Text(text))) => {
                         if let Ok(ControlMessage::Resize { cols, rows }) = serde_json::from_str(&text) {
