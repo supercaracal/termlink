@@ -16,7 +16,7 @@ build-server:
 lint: lint-frontend lint-server
 
 lint-frontend:
-	@cd frontend && npx biome check .
+	@cd frontend && npm run check
 
 lint-server:
 	@mkdir -p server/static
