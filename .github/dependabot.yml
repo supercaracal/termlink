@@ -9,7 +9,15 @@ updates:
   directory: "/frontend"
   schedule:
     interval: "weekly"
+  groups:
+    deps:
+      patterns:
+      - "*"
 - package-ecosystem: "cargo"
   directory: "/server"
   schedule:
     interval: "weekly"
+  groups:
+    deps:
+      patterns:
+      - "*"
